@@ -1,0 +1,29 @@
+description: >
+  Publish
+
+parameters:
+  path:
+    type: string
+  access:
+    type: string
+    default: public
+
+executor:
+  name: node
+
+steps:
+  - attach_workspace:
+      at: .
+  - run:
+      name: Initializing npm publishing
+      command: |
+        echo //$(echo $NPM_REGISTRY | awk -F[/:] '{print $4}')/:_authToken=$NPM_TOKEN >> ~/.npmrc
+        echo registry=$NPM_REGISTRY >> ~/.npmrc
+        echo _auth=$NPM_TOKEN >> ~/.npmrc
+        echo email=$NPM_EMAIL >> ~/.npmrc
+        echo always-auth=true >> ~/.npmrc
+  - run:
+      name: Publishing npm package
+      command: |
+        cd <<parameters.path>>
+        npm publish --access=<<parameters.access>>

@@ -6,8 +6,24 @@ description: >
 usage:
   version: 2.1
   orbs:
-    <orb-name>: <namespace>/<orb-name>@1.2.3
+    angular-npm-orb: code0987/angular-npm-orb@dev:alpha
   workflows:
     use-my-orb:
       jobs:
-        - <orb-name>/<job-name>
+        - angular-npm-orb/test:
+            project: example-angular-library
+            test: true
+            e2e: false
+        - angular-npm-orb/build:
+            requires:
+              - angular-npm-orb/test
+            project: example-angular-library
+        - angular-npm-orb/publish:
+            environment:
+              NPM_REGISTRY: https://registry.npmjs.org # Don't use https:// prefix
+              NPM_TOKEN: ...
+              NPM_EMAIL: ...
+            requires:
+              - angular-npm-orb/build
+            path: dist/example-angular-library
+            access: public

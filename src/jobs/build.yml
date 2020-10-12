@@ -1,0 +1,25 @@
+description: >
+  Build
+
+parameters:
+  project:
+    type: string
+
+executor:
+  name: node
+
+steps:
+  - checkout
+  - run:
+      name: Installing npm dependencies
+      command: if [ ! -d "node_modules" ]; then npm ci; fi
+  - run:
+      name: Restoring package-lock.json
+      command: git checkout package-lock.json
+  - run:
+      name: Building
+      command: npm run build -- <<parameters.project>> --prod
+  - persist_to_workspace:
+      root: .
+      paths:
+        - dist

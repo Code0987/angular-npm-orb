@@ -1,0 +1,48 @@
+description: >
+  Test
+
+parameters:
+  project:
+    type: string
+  test:
+    type: boolean
+    default: true
+  e2e:
+    type: boolean
+    default: false
+
+executor:
+  name: node
+
+steps:
+  - checkout
+  - run:
+      name: Installing npm dependencies
+      command: if [ ! -d "node_modules" ]; then npm ci; fi
+  - run:
+      name: Restoring package-lock.json
+      command: git checkout package-lock.json
+  - run:
+      name: Upgrading Chrome
+      command: |
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+        sudo apt-get update
+        sudo apt-get install google-chrome-stable
+  - run:
+      name: Building
+      command: npm run build -- <<parameters.project>>
+  - when:
+      condition: <<parameters.test>>
+      steps:
+        - run:
+            name: Running unit tests
+            command: npm run test -- <<parameters.project>> --watch false --progress false
+  - when:
+      condition: <<parameters.e2e>>
+      steps:
+        - run:
+            name: Running e2e tests
+            command: npm run e2e -- <<parameters.project>>
+  - store_test_results:
+      path: test-results

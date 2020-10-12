@@ -1,0 +1,14 @@
+{
+  "name": "@code0987/example-angular-library",
+  "version": "0.0.6",
+  "repository": {
+    "url": "https://github.com/Code0987/angular-npm-orb/projects/example-angular-library"
+  },
+  "peerDependencies": {
+    "@angular/common": "^10.1.5",
+    "@angular/core": "^10.1.5"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0"
+  }
+}

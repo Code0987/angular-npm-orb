@@ -2,10 +2,9 @@ version: 2.1
 
 orbs:
   # Replace this with your own!
-  <orb-name>: <namespace>/<orb-name>@<<pipeline.parameters.dev-orb-version>>
+  angular-npm-orb: code0987/angular-npm-orb@<<pipeline.parameters.dev-orb-version>>
   orb-tools: circleci/orb-tools@10.0
-  bats: circleci/bats@1.0
-  shellcheck: circleci/shellcheck@2.0
+  #shellcheck: circleci/shellcheck@2.0
 
 # Pipeline Parameters
 ## These parameters are used internally by orb-tools. Skip to the Jobs section.
@@ -32,7 +31,6 @@ jobs:
       # "greet" is a sample command packaged with this orb config.
       # This sample integration test will run as long as the greet command exists. Once you remove the greet command you should remove this line.
       # Push new changes first, before adding new tests to your config.
-      - <orb-name>/greet
 
 workflows:
   # Prior to producing a development orb (which requires credentials) basic validation, linting, and even unit testing can be performed.
@@ -42,32 +40,30 @@ workflows:
     jobs:
       - orb-tools/lint # Lint Yaml files
       - orb-tools/pack # Pack orb source
-      - shellcheck/check:
-          dir: ./src/scripts
-          exclude: SC2148
-      # optional: Run BATS tests against your scripts
-      - bats/run:
-          path: ./src/tests
+      #- shellcheck/check:
+      #    dir: ./src/scripts
+      #    exclude: SC2148
       # If you accept building open source forks, protect your secrects behind a restricted context.
       # A job containing restricted context (which holds your orb publishing credentials) may only be accessed by a user with proper permissions.
       # An open source user may begin a pipeline with a PR, and once the pipeline is approved by an authorized user at this point, the pipeline will continue with the proper context permissions.
-      - hold-for-dev-publish:
-          type: approval
-          requires:
-            - orb-tools/lint
-            - orb-tools/pack
-            - bats/run
-            - shellcheck/check
+      # - hold-for-dev-publish:
+      #     type: approval
+      #     requires:
+      #       - orb-tools/lint
+      #       - orb-tools/pack
+            #- shellcheck/check
       # Publish development version(s) of the orb.
       - orb-tools/publish-dev:
-          orb-name: <namespace>/<orb-name>
-          context: <publishing-context> # A restricted context containing your private publishing credentials. Will only execute if approved by an authorized user.
-          requires: [hold-for-dev-publish]
+          orb-name: code0987/angular-npm-orb
+          context: orb-publishing
+          requires: #[hold-for-dev-publish]
+            - orb-tools/lint
+            - orb-tools/pack
       # Trigger an integration workflow to test the
       # dev:${CIRCLE_SHA1:0:7} version of your orb
       - orb-tools/trigger-integration-tests-workflow:
           name: trigger-integration-dev
-          context: <publishing-context>
+          context: orb-publishing
           requires:
             - orb-tools/publish-dev
 
@@ -80,6 +76,17 @@ workflows:
     jobs:
       # Run any integration tests defined within the `jobs` key.
       - integration-test-1
+      - angular-npm-orb/test:
+          project: example-angular-library
+      - angular-npm-orb/build:
+          requires:
+            - angular-npm-orb/test
+          project: example-angular-library
+      - angular-npm-orb/publish:
+          requires:
+            - angular-npm-orb/build
+          context: orb-publishing
+          path: dist/example-angular-library
       # Publish a semver version of the orb. relies on
       # the commit subject containing the text "[semver:patch|minor|major|skip]"
       # as that will determine whether a patch, minor or major
@@ -87,8 +94,8 @@ workflows:
       # be skipped.
       # e.g. [semver:patch] will cause a patch version to be published.
       - orb-tools/dev-promote-prod-from-commit-subject:
-          orb-name: <namespace>/<orb-name>
-          context: <publishing-context>
+          orb-name: code0987/angular-npm-orb
+          context: orb-publishing
           add-pr-comment: false
           fail-if-semver-not-indicated: true
           publish-version-tag: false
@@ -96,4 +103,4 @@ workflows:
             - integration-test-1
           filters:
             branches:
-              only: master
+              only: main
